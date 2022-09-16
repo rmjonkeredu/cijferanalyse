@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Uitleg
+## Uitleg
 
 Dit is een R Markdown document. Dit is een formaat waarmee op een eenvoudige manier analyses reproduceerd kunnen worden. Zie ook  <http://rmarkdown.rstudio.com>.
 
@@ -17,10 +17,19 @@ Dit is een R Markdown document. Dit is een formaat waarmee op een eenvoudige man
 Dit is een rapport dat inzicht geeft in het verloop van SE cijfers tussen en binnen klassen voor de cohorten die in 2023 examen doen.
 
 
-```{r cars, echo = FALSE, results = FALSE, message = FALSE}
+```{r init, echo = FALSE, results = FALSE, message = FALSE}
+# initial packages
 library(dplyr)
 library(tidyverse)
 library(ggplot2)
+# inital data import
+LesGroepenPerSchooljaar<- read.csv("LesgroepenPerSchooljaar.csv", sep=";", dec=",", header=TRUE)
+CijfersPerToets4H5V_22232_20220915<- read.csv("CijfersPerToets4H5V_2223_20220915.csv", sep=";", dec=",", header=TRUE)
+LesGroepenPerSchooljaar<- LesGroepenPerSchooljaar %>% filter(Schooljaar == "2021/2022" | Schooljaar == "2022/2023" )
+
 ```
-
-
+## inspectie van data
+```{r inspection , echo = FALSE}
+head(LesGroepenPerSchooljaar)
+head(CijfersPerToets4H5V_22232_20220915)
+```
