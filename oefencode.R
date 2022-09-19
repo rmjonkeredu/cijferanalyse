@@ -1,28 +1,9 @@
----
-title: "Cijferanalyse"
-author: "Rudy Jonker"
-date: "`r Sys.Date()`"
-output: html_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-## Uitleg
-
-Dit is een R Markdown document. Dit is een formaat waarmee op een eenvoudige manier analyses reproduceerd kunnen worden. Zie ook  <http://rmarkdown.rstudio.com>.
-
-## Cijferanalyse examenklassen
-Dit is een rapport dat inzicht geeft in het verloop van SE cijfers tussen en binnen klassen voor de cohorten die in 2023 examen doen.
-
-
-```{r init, echo = FALSE, results = FALSE, message = FALSE}
-# initial packages
 library(dplyr)
 library(tidyverse)
 library(ggplot2)
+library(tibble)
 # inital data import
+setwd("C:/Users/203043/Documents/cijferanalyse/")
 LesGroepenPerSchooljaar<- read.csv("LesgroepenPerSchooljaar.csv", sep=";", dec=",", header=TRUE)
 CijfersPerToets4H5V_22232_20220915<- read.csv("CijfersPerToets4H5V_2223_20220915.csv", sep=";", dec=",", header=TRUE)
 LesGroepenPerSchooljaar$VakAfk<- as.character(LesGroepenPerSchooljaar$VakAfk)
@@ -59,15 +40,9 @@ while(i< aantalrijen){
 }
 DitJaar2<- cbind(DitJaar, tempvec)
 Cohort2023<- rbind(DitJaar2,VorigJaar2)
-```
-### Inspectie
 
-Dit zijn de aantallen SE cijfers per vak voor de VWO en HAVO cohorten die in 2023 examen doen.
-De vakken die in het combinatiecijfer vallen, en dus al afgerond zijn (m.u.v. PWS) zijn er uit gehaald.
-```{r inspectie, echo = FALSE}
 # selectie vakken
 Cohort2023b<-  Cohort2023 %>% filter(VakAfk != "ckv") %>% filter(VakAfk != "combivwo") %>% filter(VakAfk != "anw") %>% filter(VakAfk != "combihavo") %>% filter(VakAfk != "ckv") %>% filter(VakAfk != "lo") %>% filter(VakAfk != "maat") %>% filter(VakAfk != "lv") %>% filter(VakAfk != "pws") %>% filter(VakAfk != "men")%>% filter(VakAfk != "lob") %>% filter(VakAfk != "cam") %>% filter(VakAfk != "ebcl") %>% filter(VakAfk != "R3F")
 #Cohort2023b$VakAfk
 
 table(Cohort2023b$VakAfk)
-```
