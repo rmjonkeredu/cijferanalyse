@@ -22,21 +22,31 @@ Dit is een rapport dat inzicht geeft in het verloop van SE cijfers tussen en bin
 library(dplyr)
 library(tidyverse)
 library(ggplot2)
+
 # inital data import
 LesGroepenPerSchooljaar<- read.csv("LesgroepenPerSchooljaar.csv", sep=";", dec=",", header=TRUE)
 CijfersPerToets4H5V_22232_20220915<- read.csv("CijfersPerToets4H5V_2223_20220915.csv", sep=";", dec=",", header=TRUE)
+CijfersPerToets4H5V_2122_20220915<- read.csv("CijfersPerToets4H5V_2122_20220915.csv", sep=";", dec=",", header=TRUE)
+
 LesGroepenPerSchooljaar$VakAfk<- as.character(LesGroepenPerSchooljaar$VakAfk)
 LesGroepenPerSchooljaar$Leerlingnummer<- as.character(LesGroepenPerSchooljaar$Leerlingnummer)
 CijfersPerToets4H5V_22232_20220915$VakAfk<- as.character(CijfersPerToets4H5V_22232_20220915$VakAfk)
+CijfersPerToets4H5V_2122_20220915$VakAfk<- as.character(CijfersPerToets4H5V_2122_20220915$VakAfk)
+
 CijfersPerToets4H5V_22232_20220915$Leerlingnummer<- as.character(CijfersPerToets4H5V_22232_20220915$Leerlingnummer)
+CijfersPerToets4H5V_2122_20220915$Leerlingnummer<- as.character(CijfersPerToets4H5V_2122_20220915$Leerlingnummer)
+
 LesGroepenPerSchooljaar<- LesGroepenPerSchooljaar %>% mutate(combinr =paste(Leerlingnummer, VakAfk, sep="_"))
 CijfersPerToets4H5V_22232_20220915<- CijfersPerToets4H5V_22232_20220915 %>% mutate(combinr =paste(Leerlingnummer, VakAfk, sep="_"))
+CijfersPerToets4H5V_2122_20220915<- CijfersPerToets4H5V_2122_20220915 %>% mutate(combinr =paste(Leerlingnummer, VakAfk, sep="_"))
 
+
+TweeJaarTerug <- CijfersPerToets4H5V_22232_20220915 %>% filter(Examendossier.resultaten.Schooljaar=="2020/2021")
 VorigJaar<-  CijfersPerToets4H5V_22232_20220915 %>% filter(Examendossier.resultaten.Schooljaar=="2021/2022")
 DitJaar<-  CijfersPerToets4H5V_22232_20220915 %>% filter(Examendossier.resultaten.Schooljaar=="2022/2023")
+TweeJaarTerugKlas <- LesGroepenPerSchooljaar %>% filter(Schooljaar=="2020/2021")
 VorigJaarKlas<-  LesGroepenPerSchooljaar %>% filter(Schooljaar=="2021/2022")
 DitJaarKlas<-  LesGroepenPerSchooljaar %>% filter(Schooljaar=="2022/2023")
-
 
 # code om de lesgroep per cijfer toe te voegen
 aantalrijen<- dim(VorigJaar)[1]
@@ -58,7 +68,18 @@ while(i< aantalrijen){
   tempvec[i]<- DitJaarKlas$Lesgroep[which(DitJaarKlas$combinr==temp)[1]]
 }
 DitJaar2<- cbind(DitJaar, tempvec)
-Cohort2023<- rbind(DitJaar2,VorigJaar2)
+#
+aantalrijen<- dim(TweeJaarTerug)[1]
+tempvec<- array(aantalrijen)
+i<- 0
+while(i< aantalrijen){
+  i<- i+1
+  temp<- TweeJaarTerug$combinr[i]
+  tempvec[i]<- TweeJaarTerugKlas$Lesgroep[which(TweeJaarTerugKlas$combinr==temp)[1]]
+}
+TweeJaarTerug2<- cbind(TweeJaarTerug, tempvec)
+Cohort2023<- rbind(DitJaar2,VorigJaar2,TweeJaarTerug2)
+
 ```
 ### Inspectie
 
@@ -70,4 +91,59 @@ Cohort2023b<-  Cohort2023 %>% filter(VakAfk != "ckv") %>% filter(VakAfk != "comb
 #Cohort2023b$VakAfk
 
 table(Cohort2023b$VakAfk)
+```
+
+```{r grafieken, echo = FALSE, message = FALSE} 
+vakken<- c("ak","beco", "biol", "bsm", "dutl", "econ", "entl", "fatl", "ges", "kua", "kubv", "ltc", "maw", "nat", "netl", "nlt", "schk", "wisA", "wisB", "wisC", "wisD")
+
+q<- 0
+while(q<length(vakken)){
+  q<- q+1
+temp6<- Cohort2023b %>% filter(VakAfk== vakken[q])
+  assign(paste0(vakken[q]), temp6)
+  temp7<- temp6 %>% filter(Leerweg== "ATH")
+  temp8<- temp6 %>% filter(Leerweg== "HAVO")
+  percluster<- temp7 %>% group_by(tempvec, Toetscode) %>% summarise(mean = mean(Cijfer, na.rm = TRUE), sd = sd(Cijfer, na.rm = TRUE))
+  percluster<- na.omit(percluster)
+ 
+ p<-  ggplot(data = percluster, aes(Toetscode, mean, color = tempvec)) +
+  geom_pointrange(aes(ymin = mean-sd, ymax = mean+sd), 
+                  position=position_jitter(width=0.15), 
+                  linetype='solid') +
+  xlab("Schoolexamencode en eindcijfer SE") +
+  ylim(3,10)+
+  ggtitle(vakken[q])+
+  ylab("Gemiddelde cijfer en standaardafwijking") +
+  theme_bw()
+ print(p)
+}
+```
+
+### Volgende stuk geeft het gemiddelde voor het vak per SE (voor alle clusters samen)
+Hieraan kun je zien hoe de spreiding binnen de clusters van het huidige cohort past in de spreiding van het vorige jaar
+
+```{r referentie, echo = FALSE, message = FALSE} 
+vakken<- c("ak","beco", "biol", "bsm", "dutl", "econ", "entl", "fatl", "ges", "kua", "kubv", "ltc", "maw", "nat", "netl", "nlt", "schk", "wisA", "wisB", "wisC", "wisD")
+
+q<- 0
+while(q<length(vakken)){
+  q<- q+1
+temp6<- CijfersPerToets4H5V_2122_20220915 %>% filter(VakAfk== vakken[q])
+  assign(paste0(vakken[q]), temp6)
+  temp7<- temp6 %>% filter(Leerweg== "ATH")
+  temp8<- temp6 %>% filter(Leerweg== "HAVO")
+  referentie<- temp7 %>% group_by(Toetscode) %>% summarise(mean = mean(Cijfer, na.rm = TRUE), sd = sd(Cijfer, na.rm = TRUE))
+  referentie<- na.omit(referentie)
+ 
+ p<-  ggplot(data = referentie, aes(Toetscode, mean)) +
+  geom_pointrange(aes(ymin = mean-sd, ymax = mean+sd), 
+                  position=position_jitter(width=0.15), 
+                  linetype='solid') +
+  xlab("Schoolexamencode en eindcijfer SE") +
+  ylab("Gemiddelde cijfer en standaardafwijking") +
+  ggtitle(vakken[q])+
+  ylim(3,10)+
+  theme_bw()
+ print(p)
+}
 ```
